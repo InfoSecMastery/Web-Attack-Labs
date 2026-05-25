@@ -152,4 +152,4 @@ This project is for **educational purposes only**. It is intentionally insecure 
 
 ---
 
-Built for [InfoSecMastery](https://github.com/your-username/InfoSecMastery) — learn, hack, and secure. 🛡️
+Built for [InfoSecMastery](https://www.youtube.com/@infosecmastery) — learn, hack, and secure. 🛡️
