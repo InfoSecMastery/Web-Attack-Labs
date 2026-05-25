@@ -1,0 +1,11 @@
+services:
+  web:
+    build: .
+    container_name: idor-demo-app
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount the current directory so the SQLite DB persists across container restarts
+      - .:/app
+    environment:
+      - FLASK_ENV=development

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InfoSecMastery Bank - {% block title %}Login{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
+</head>
+<body>
+  {% if session.user_id %}
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <div class="nav-brand" id="navBrand">
+        <span class="brand-icon">🏦</span> InfoSecMastery Bank
+      </div>
+      <div class="nav-links" id="navLinks">
+        <a href="{{ url_for('dashboard') }}" class="{% block dash_active %}{% endblock %}">📊 Dashboard</a>
+        {% set profile_id = session.get('profile_identifier', session.get('user_id', 1)) %}
+        <a href="{{ url_for('profile', user_id=profile_id) }}" class="{% block profile_active %}{% endblock %}">👤 Profile</a>
+        <a href="{{ url_for('logout') }}" class="logout-btn">🚪 Logout</a>
+      </div>
+    </div>
+    {% if security_mode != 'vulnerable' %}
+    <div class="security-banner {{ security_mode }}">
+      <span class="security-banner-icon">{{ '🛡️' if security_mode != 'vulnerable' else '⚠️' }}</span>
+      <span class="security-banner-text">
+        {% if security_mode == 'randomized' %}
+          Randomized ID Protection
+        {% elif security_mode == 'identity' %}
+          Identity Verification Active
+        {% elif security_mode == 'both' %}
+          Full IDOR Protection
+        {% endif %}
+      </span>
+    </div>
+    {% endif %}
+  </nav>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</body>
+</html>

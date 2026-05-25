@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block dash_active %}active{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+  <!-- Welcome Section -->
+  <div class="welcome-section">
+    <h1>Welcome back, {{ user.full_name.split(' ')[0] }}! 👋</h1>
+    <p>{{ greeting }}! Here's your financial summary for today.</p>
+  </div>
+
+  <!-- Balance Card -->
+  <div class="balance-card">
+    <div class="balance-label">💰 Current Balance</div>
+    <div class="balance-amount">${{ "{:,.2f}".format(user.current_balance) }}</div>
+    <div class="balance-account">{{ user.account_type }} • {{ user.bank_id }}</div>
+  </div>
+
+  <!-- Dashboard Info Cards -->
+  <div class="dashboard-grid">
+    <div class="dashboard-card">
+      <div class="card-icon">📊</div>
+      <h3>Spending This Month</h3>
+      <div class="card-value">${{ "{:,.2f}".format(spending.spent) }}</div>
+      <p>{{ (spending.spent / spending.limit * 100) | round }}% of ${{ "{:,.0f}".format(spending.limit) }} limit</p>
+      <div class="spending-bar mt-10">
+        <div class="bar-track">
+          {% set pct = (spending.spent / spending.limit * 100) if spending.limit > 0 else 0 %}
+          <div class="bar-fill" style="width: {{ pct if pct <= 100 else 100 }}%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">💳</div>
+      <h3>Recent Transactions</h3>
+      <div class="card-value">{{ spending.transactions }} this month</div>
+      <p>View your latest account activity</p>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">⭐</div>
+      <h3>Account Status</h3>
+      <div class="card-value">✅ Active</div>
+      <p>All systems operational • 2FA Enabled</p>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">📈</div>
+      <h3>Spending Breakdown</h3>
+      <div class="spending-bar">
+        {% set max_cat = spending.categories.values() | list | max %}
+        {% for cat, val in spending.categories.items() %}
+        <div class="bar-item">
+          <span class="bar-label">{{ cat }}</span>
+          <span class="bar-value">${{ "{:,.0f}".format(val) }}</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: {{ (val / max_cat * 100) if max_cat > 0 else 0 }}%;"></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <button class="action-btn" onclick="alert('💸 Transfer feature coming soon!')">
+      <span class="btn-icon">💸</span> Send Money
+    </button>
+    <button class="action-btn" onclick="alert('📥 Request feature coming soon!')">
+      <span class="btn-icon">📥</span> Request Money
+    </button>
+    <button class="action-btn" onclick="alert('📄 Statement download coming soon!')">
+      <span class="btn-icon">📄</span> Download Statements
+    </button>
+    <button class="action-btn" onclick="alert('🔄 Auto-pay coming soon!')">
+      <span class="btn-icon">🔄</span> Auto-Pay
+    </button>
+    <button class="action-btn" onclick="alert('🔒 Security settings page coming soon!')">
+      <span class="btn-icon">🔒</span> Account Security
+    </button>
+    <button class="action-btn" onclick="alert('🎯 Set your savings goals! Coming soon!')">
+      <span class="btn-icon">🎯</span> Savings Goals
+    </button>
+  </div>
+
+  <!-- Recent Transactions -->
+  <div class="transactions-section">
+    <h2>📋 Recent Transactions</h2>
+    <div id="transactionList">
+      {% for txn in transactions %}
+      <div class="transaction-item">
+        <div class="txn-left">
+          <div class="txn-icon {{ 'deposit' if txn.amount > 0 else 'withdrawal' }}">
+            {{ '📩' if txn.amount > 0 else '💳' }}
+          </div>
+          <div class="txn-details">
+            <div class="txn-desc">{{ txn.description }}</div>
+            <div class="txn-date">{{ txn.date }} • {{ txn.status }}</div>
+          </div>
+        </div>
+        <div class="txn-amount {{ 'positive' if txn.amount > 0 else 'negative' }}">
+          {{ '+' if txn.amount > 0 else '' }}${{ "{:,.2f}".format(txn.amount | abs) }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

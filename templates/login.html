@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="login-container">
+  <div class="login-card">
+    <div class="logo">🏦</div>
+    <h1>InfoSecMastery Bank</h1>
+    <p class="subtitle">Secure Banking Platform</p>
+
+    {% if error %}
+    <div class="error-message show">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('login') }}">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="Enter your username" autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password">
+      </div>
+
+      <!-- Security Mode Selection -->
+      <div class="security-options">
+        <p class="security-title">🛡️ Security Mode</p>
+
+        <label class="checkbox-container">
+          <input type="checkbox" name="randomized_id" id="randomized_id">
+          <span class="checkmark"></span>
+          <div class="checkbox-text">
+            <strong>Randomized ID</strong>
+            <small>Replace numeric user IDs with random UUIDs. Even if you know another user's UUID, it changes every login session.</small>
+          </div>
+        </label>
+
+        <label class="checkbox-container">
+          <input type="checkbox" name="identity_verification" id="identity_verification">
+          <span class="checkmark"></span>
+          <div class="checkbox-text">
+            <strong>Identity Verification</strong>
+            <small>The server checks that the logged-in user matches the requested profile ID. Blocks viewing other users' data.</small>
+          </div>
+        </label>
+
+        <p class="security-note">
+          ⚠️ <strong>Neither checked = VULNERABLE!</strong> The app will have the IDOR vulnerability enabled.
+        </p>
+      </div>
+
+      <button type="submit" class="login-btn">🔐 Sign In</button>
+    </form>
+
+    <div class="demo-credentials">
+      <p>📋 Demo Credentials</p>
+      <div class="cred"><span>alice</span> <span>password123</span></div>
+      <div class="cred"><span>bob</span> <span>secure456</span></div>
+      <div class="cred"><span>charlie</span> <span>test789</span></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

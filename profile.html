@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InfoSecMastery Bank - Profile</title>
+  <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-brand" id="navBrand">
+      <span class="brand-icon">🏦</span> InfoSecMastery Bank
+    </div>
+    <div class="nav-links" id="navLinks">
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="profile.html" class="active">👤 Profile</a>
+      <a href="#" id="navLogoutBtn" class="logout-btn">🚪 Logout</a>
+    </div>
+  </nav>
+
+  <!-- Profile Content -->
+  <div class="profile-container">
+    <!-- IDOR Notice (dynamically populated) -->
+    <div id="idorNotice"></div>
+    
+    <!-- Error container -->
+    <div id="profileError"></div>
+
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <div class="profile-avatar" id="profileAvatar">👤</div>
+      <div class="profile-info">
+        <h1 id="profileName">Loading...</h1>
+        <p id="profileUsername">@username</p>
+      </div>
+    </div>
+
+    <!-- Profile Information Grid -->
+    <div class="profile-grid">
+      <div class="profile-field">
+        <div class="field-label">📧 Email Address</div>
+        <div class="field-value" id="fieldEmail">Loading...</div>
+      </div>
+
+      <div class="profile-field">
+        <div class="field-label">📞 Phone Number</div>
+        <div class="field-value" id="fieldPhone">Loading...</div>
+      </div>
+
+      <div class="profile-field">
+        <div class="field-label">🏠 Home Address</div>
+        <div class="field-value" id="fieldAddress">Loading...</div>
+      </div>
+
+      <div class="profile-field">
+        <div class="field-label">🆔 Bank ID Number</div>
+        <div class="field-value" id="fieldBankId">Loading...</div>
+      </div>
+
+      <div class="profile-field">
+        <div class="field-label">🌍 IBAN</div>
+        <div class="field-value" id="fieldIban">Loading...</div>
+      </div>
+
+      <div class="profile-field">
+        <div class="field-label">💰 Current Balance</div>
+        <div class="field-value sensitive" id="fieldBalance">Loading...</div>
+      </div>
+
+      <div class="profile-field">
+        <div class="field-label">🏦 Account Type</div>
+        <div class="field-value" id="fieldAccountType">Loading...</div>
+      </div>
+
+      <div class="profile-field">
+        <div class="field-label">📅 Member Since</div>
+        <div class="field-value" id="fieldMemberSince">Loading...</div>
+      </div>
+
+      <div class="profile-field">
+        <div class="field-label">🔑 Last Login</div>
+        <div class="field-value" id="fieldLastLogin">Loading...</div>
+      </div>
+
+      <div class="profile-field">
+        <div class="field-label">🔒 Social Security (Masked)</div>
+        <div class="field-value sensitive" id="fieldSSN">Loading...</div>
+      </div>
+    </div>
+
+    <!-- IDOR Exploit Playground Box -->
+    <div id="idorExploitBox"></div>
+
+    <!-- Extra IDOR explanation for students -->
+    <div class="idor-notice" style="margin-top: 20px; border-color: rgba(108,99,255,0.3); background: rgba(108,99,255,0.06);">
+      <div class="notice-icon">📖</div>
+      <div class="notice-content">
+        <h3 style="color:#6c63ff;">🎓 IDOR Vulnerability Demonstrated Here</h3>
+        <p>
+          <strong>What is IDOR?</strong> Insecure Direct Object Reference occurs when an application 
+          exposes a reference to an internal implementation object (like a user ID, database key, or 
+          filename) in a URL or parameter, without proper authorization checks.<br><br>
+          <strong>How to exploit:</strong> After logging in, notice the profile URL includes 
+          <code>?user_id=X</code>. If you change <code>X</code> to another user's ID (1, 2, or 3), 
+          you can view their full profile — including balance, address, phone number, and other 
+          sensitive data — <em>without any authorization check</em>.<br><br>
+          <strong>The Fix:</strong> A secure application would verify that the logged-in user's ID 
+          matches the requested profile ID before returning any data. This demo intentionally omits 
+          that check to teach the vulnerability.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      initNavbar();
+      initProfile();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block profile_active %}active{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+  <!-- Error / IDOR Notice -->
+  <div id="idorNotice">
+    {% if error %}
+    <div class="idor-notice" style="border-color: rgba(255,77,77,0.3); background: rgba(255,77,77,0.1);">
+      <div class="notice-icon">⚠️</div>
+      <div class="notice-content">
+        <h3 style="color:#ff6b6b;">{{ 'Access Blocked' if security_mode in ('identity', 'both') else 'User Not Found' }}</h3>
+        <p>{{ error }}</p>
+      </div>
+    </div>
+    {% elif not is_own_profile and security_mode == 'vulnerable' %}
+    <div class="idor-notice">
+      <div class="notice-icon">🔓</div>
+      <div class="notice-content">
+        <h3>IDOR Vulnerability Exploited!</h3>
+        <p>You are viewing <strong>{{ target_user.full_name }}'s</strong> profile, not your own!
+        The application failed to verify that you ({{ user.username }}) are authorized to view
+        user ID {{ target_user.id }}. Simply changing <code>?user_id=</code> in the URL lets you
+        access any user's sensitive information. This is an <strong>Insecure Direct Object
+        Reference (IDOR)</strong> vulnerability.</p>
+      </div>
+    </div>
+    {% elif is_own_profile and security_mode == 'vulnerable' %}
+    <div class="idor-notice">
+      <div class="notice-icon">ℹ️</div>
+      <div class="notice-content">
+        <h3>About This Page</h3>
+        <p>This page displays your personal profile information. Notice the URL parameter
+        <code>?user_id={{ target_user.id }}</code>. Try changing the ID to view other users'
+        data (e.g., <code>?user_id=5001</code>, <code>?user_id=5002</code>) — <strong>the app is currently vulnerable!</strong></p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Profile Header -->
+  <div class="profile-header">
+    <div class="profile-avatar">{{ target_user.profile_picture }}</div>
+    <div class="profile-info">
+      <h1>{{ target_user.full_name }}</h1>
+      <p>@{{ target_user.username }}</p>
+    </div>
+  </div>
+
+  <!-- Profile Information Grid -->
+  <div class="profile-grid">
+    <div class="profile-field">
+      <div class="field-label">📧 Email Address</div>
+      <div class="field-value">{{ target_user.email }}</div>
+    </div>
+
+    <div class="profile-field">
+      <div class="field-label">📞 Phone Number</div>
+      <div class="field-value">{{ target_user.phone_number }}</div>
+    </div>
+
+    <div class="profile-field">
+      <div class="field-label">🏠 Home Address</div>
+      <div class="field-value">{{ target_user.home_address }}</div>
+    </div>
+
+    <div class="profile-field">
+      <div class="field-label">🆔 Bank ID Number</div>
+      <div class="field-value">{{ target_user.bank_id }}</div>
+    </div>
+
+    <div class="profile-field">
+      <div class="field-label">🌍 IBAN</div>
+      <div class="field-value">{{ target_user.iban }}</div>
+    </div>
+
+    <div class="profile-field">
+      <div class="field-label">💰 Current Balance</div>
+      <div class="field-value sensitive">${{ "{:,.2f}".format(target_user.current_balance) }}</div>
+    </div>
+
+    <div class="profile-field">
+      <div class="field-label">🏦 Account Type</div>
+      <div class="field-value">{{ target_user.account_type }}</div>
+    </div>
+
+    <div class="profile-field">
+      <div class="field-label">📅 Member Since</div>
+      <div class="field-value">{{ target_user.member_since }}</div>
+    </div>
+
+    <div class="profile-field">
+      <div class="field-label">🔑 Last Login</div>
+      <div class="field-value">{{ target_user.last_login }}</div>
+    </div>
+
+    <div class="profile-field">
+      <div class="field-label">🔒 Social Security (Masked)</div>
+      <div class="field-value sensitive">{{ target_user.social_security }}</div>
+    </div>
+  </div>
+
+  <!-- IDOR Exploit Notes (only shown in vulnerable mode) -->
+  {% if security_mode == 'vulnerable' %}
+  <div class="profile-idor-exploit">
+    <div class="exploit-icon">🔑</div>
+    <div class="exploit-content">
+      <h3>🔍 IDOR Exploit Playground</h3>
+      <p>Enter any User ID (5001-5003) to view that user's full profile without authorization:</p>
+      <div>
+        <input type="number" id="idorUserIdInput" min="5001" max="5003" value="5001" placeholder="User ID" style="margin-top:10px; padding:10px 14px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#ffffff; font-size:14px; width:180px; margin-right:8px;">
+        <button class="go-btn" onclick="exploitIDOR()">View Profile ▸</button>
+      </div>
+      <p style="margin-top:8px; font-size:12px; color:#606080;">
+        Try IDs: 5001 (Alice), 5002 (Bob), 5003 (Charlotte)
+      </p>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Extra IDOR explanation for students -->
+  <div class="idor-notice" style="margin-top: 20px; border-color: rgba(108,99,255,0.3); background: rgba(108,99,255,0.06);">
+    <div class="notice-icon">📖</div>
+    <div class="notice-content">
+      <h3 style="color:#6c63ff;">🎓 IDOR Vulnerability & Security Modes</h3>
+      <p>
+        <strong>What is IDOR?</strong> Insecure Direct Object Reference occurs when an application
+        exposes a reference to an internal implementation object (like a user ID) in a URL without
+        proper authorization checks.<br><br>
+        <strong>Three Security Modes:</strong><br>
+        • <strong>Vulnerable (neither checked)</strong> — No protection. Change <code>?user_id=5001</code> to any ID to view their data.<br>
+        • <strong>Randomized ID</strong> — Uses long random UUIDs that change every login. IDs are unpredictable.<br>
+        • <strong>Identity Verification</strong> — Server checks your session against the requested profile. Blocks unauthorized access.<br>
+        • <strong>Both</strong> — Maximum protection with both UUIDs and server-side verification.<br><br>
+        <strong>The Fix:</strong> A secure application always verifies that the logged-in user is authorized to access
+        the requested resource, and uses unpredictable identifiers.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+function exploitIDOR() {
+  const input = document.getElementById('idorUserIdInput');
+  if (!input) return;
+  const id = parseInt(input.value);
+  if (id >= 5001 && id <= 5003) {
+    window.location.href = '{{ url_for("profile") }}?user_id=' + id;
+  }
+}
+</script>
+{% endblock %}
