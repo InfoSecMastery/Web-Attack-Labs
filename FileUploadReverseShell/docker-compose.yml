@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  fileupload-app:
+    build: .
+    container_name: infosecmastery-fileupload
+    ports:
+      - "5001:5001"
+    volumes:
+      - uploads_data:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  uploads_data:
