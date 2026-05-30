@@ -1,19 +1,19 @@
-FROM python:3.12-slim
+FROM php:8.2-apache
 
-WORKDIR /app
+# Enable Apache mod_rewrite (optional)
+RUN a2enmod rewrite
 
-# Copy requirements first for better layer caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Set working directory
+WORKDIR /var/www/html
 
-# Copy the entire application
+# Copy application files
 COPY . .
 
-# Create the uploads directory (in case it's empty and git doesn't track it)
-RUN mkdir -p uploads
+# Fix permissions for uploads directory
+RUN chown -R www-data:www-data uploads && chmod -R 755 uploads
 
-# Expose the port Flask runs on
-EXPOSE 5001
+# Expose port 80 (standard HTTP)
+EXPOSE 80
 
-# Run the application
-CMD ["python", "app.py"]
+# Run Apache in foreground
+CMD ["apache2-foreground"]

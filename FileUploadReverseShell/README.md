@@ -1,6 +1,6 @@
 # InfoSecMastery Photo Gallery — File Upload Vulnerability Lab
 
-A deliberately vulnerable web application designed to teach students about **File Upload Vulnerabilities** and the various security mechanisms used to prevent them. Part of the [InfoSecMastery](https://github.com/InfoSecMastery) security training series.
+A deliberately vulnerable **PHP** web application designed to teach students about **File Upload Vulnerabilities** and the various security mechanisms used to prevent them. Part of the [InfoSecMastery](https://github.com/InfoSecMastery) security training series.
 
 ## 🎯 Learning Objectives
 
@@ -11,18 +11,18 @@ A deliberately vulnerable web application designed to teach students about **Fil
 
 ## 💻 Running the Application
 
-### Option 1: Python (direct)
+### Option 1: PHP built-in server
 
 ```bash
-pip install -r requirements.txt
-python app.py
+cd FileUploadReverseShell
+php -S 0.0.0.0:5001
 ```
 
 ### Option 2: Docker
 
 ```bash
 docker build -t infosecmastery-fileupload .
-docker run -d -p 5001:5001 infosecmastery-fileupload
+docker run -d -p 5001:80 infosecmastery-fileupload
 ```
 
 ### Option 3: Docker Compose
@@ -61,18 +61,12 @@ Each level adds a progressively stronger security layer. The goal is to upload a
 - **Lesson:** MIME type headers are client-controlled and trivially spoofed
 
 ### 🟢 Level 4 — Magic Number Check
-- **Protection:** Server reads the file's header bytes to verify it's a real image (PNG magic bytes `\x89PNG`, JPEG `\xFF\xD8\xFF`, GIF `GIF89a`, etc.)
-- **Bypass:** Prepend valid magic bytes to your shell code (e.g., `GIF89a<?php system($_GET['cmd']); ?>` or use a polyglot file)
+- **Protection:** Server reads the file's header bytes to verify it's a real image
+- **Bypass:** Prepend valid magic bytes to your shell code (e.g., `GIF89a<?php system($_GET['cmd']); ?>`)
 - **Lesson:** Magic numbers are stronger but can still be bypassed with polyglots
 
 ### ✅ Level 5 — Fully Secure
-- **Protection:** Combined defenses:
-  - Extension **whitelist** (only `.png`, `.jpg`, `.gif`, `.webp`, `.bmp`)
-  - MIME type verification
-  - Magic number validation
-  - Double extension detection (blocks `shell.php.jpg`)
-  - Randomized filenames (prevents path traversal)
-- **Bypass:** Extremely difficult — requires finding a vulnerability in the image processing library itself
+- **Protection:** Combined defenses: extension whitelist, MIME, magic bytes, double extension detection, randomized filenames
 - **Lesson:** Defense in depth with whitelisting is the proper approach
 
 ## 🛠️ Testing Tools
@@ -80,32 +74,35 @@ Each level adds a progressively stronger security layer. The goal is to upload a
 - **Burp Suite** — Intercept and modify upload requests
 - **cURL** — Send raw HTTP requests
 - **Python requests** — Script custom upload attempts
-- **ExifTool** — Craft polyglot files
 
 ## 🐳 Docker Details
 
-- The app runs on port **5001**
-- Uploaded files persist via a Docker named volume (`uploads_data`)
-- To reset all uploads: `docker compose down -v && docker compose up -d`
+- Built on `php:8.2-apache`
+- Runs on port **80** inside container, mapped to **5001** on host
+- Uploaded files persist via Docker named volume (`uploads_data`)
 
 ## 📁 Project Structure
 
 ```
 FileUploadReverseShell/
-├── app.py                  # Flask application with all security logic
-├── Dockerfile              # Docker image definition
-├── docker-compose.yml      # Docker Compose configuration
-├── requirements.txt        # Python dependencies
-├── uploads/                # Uploaded files directory
-├── .dockerignore           # Docker build exclusions
+├── config.php              # Configuration (users, constants, magic numbers)
+├── index.php               # Login page with security level selector
+├── gallery.php             # Upload form + file gallery + JS logic
+├── view.php                # Serve uploaded files securely
+├── logout.php              # Session destroy
+├── lib/
+│   └── functions.php       # All security logic (5 levels)
 ├── templates/
-│   ├── base.html           # Navbar + security level banner
-│   ├── login.html          # Login page with level selector
-│   └── gallery.html        # Upload form + file gallery + JS logic
-└── static/styles/
-    └── style.css           # Dark theme UI styles
+│   ├── header.php          # Navbar + security banner
+│   └── footer.php          # Closing HTML tags
+├── static/styles/
+│   └── style.css           # Dark theme UI
+├── uploads/                # Uploaded files directory
+├── Dockerfile              # php:8.2-apache image
+├── docker-compose.yml      # Docker Compose config
+└── README.md + tutorial.md # Documentation
 ```
 
 ## ⚠️ Disclaimer
 
-This application is intentionally vulnerable for **educational purposes only**. Do not deploy it on public networks or use it to attack systems without explicit authorization.
+This application is intentionally vulnerable for **educational purposes only**. Do not deploy it on public networks.

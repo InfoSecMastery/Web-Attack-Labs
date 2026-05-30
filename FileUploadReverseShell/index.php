@@ -1,17 +1,48 @@
-{% extends "base.html" %}
-{% block title %}Login{% endblock %}
-{% block content %}
+<?php
+require_once __DIR__ . '/lib/functions.php';
+
+// If already logged in, redirect to gallery
+if (is_logged_in()) {
+    header('Location: gallery.php');
+    exit;
+}
+
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+    $level = $_POST['security_level'] ?? '1';
+
+    if (empty($username) || empty($password)) {
+        $error = 'Please enter both username and password.';
+    } elseif (authenticate($username, $password)) {
+        $_SESSION['user_id'] = $username;
+        $_SESSION['username'] = $username;
+        $_SESSION['security_level'] = $level;
+        $_SESSION['uploaded_files'] = [];
+        header('Location: gallery.php');
+        exit;
+    } else {
+        $error = 'Invalid username or password.';
+    }
+}
+
+$page_title = 'Login';
+require_once __DIR__ . '/templates/header.php';
+?>
+
 <div class="login-container">
   <div class="login-card">
     <div class="logo">📸</div>
     <h1>InfoSecMastery Gallery</h1>
     <p class="subtitle">File Upload Vulnerability Lab</p>
 
-    {% if error %}
-    <div class="error-message show">{{ error }}</div>
-    {% endif %}
+    <?php if ($error): ?>
+    <div class="error-message show"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
 
-    <form method="POST" action="{{ url_for('login') }}">
+    <form method="POST" action="index.php">
       <div class="form-group">
         <label for="username">Username</label>
         <input type="text" id="username" name="username" placeholder="Enter your username" autocomplete="username">
@@ -84,4 +115,5 @@
     </div>
   </div>
 </div>
-{% endblock %}
+
+<?php require_once __DIR__ . '/templates/footer.php'; ?>

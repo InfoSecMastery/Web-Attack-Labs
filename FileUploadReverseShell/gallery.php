@@ -1,8 +1,47 @@
-{% extends "base.html" %}
-{% block title %}Gallery{% endblock %}
-{% block gallery_active %}active{% endblock %}
+<?php
+require_once __DIR__ . '/lib/functions.php';
+require_login();
 
-{% block content %}
+$level = $_SESSION['security_level'] ?? '1';
+$success = '';
+$error = '';
+$error_type = '';
+
+// Handle file deletion
+if (isset($_GET['delete'])) {
+    $filename = basename($_GET['delete']);
+    $filepath = UPLOAD_DIR . $filename;
+    if (file_exists($filepath)) {
+        unlink($filepath);
+    }
+    remove_user_file($filename);
+    header('Location: gallery.php');
+    exit;
+}
+
+// Handle file upload
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
+    $result = validate_upload($_FILES['file'], $level);
+    if ($result['valid']) {
+        $success = $result['message'];
+        $error_type = 'success';
+    } else {
+        $error = $result['message'];
+        $error_type = 'danger';
+        // Clean up temp file if it exists
+        if (isset($result['filename'])) {
+            $temppath = UPLOAD_DIR . $result['filename'];
+            if (file_exists($temppath)) unlink($temppath);
+        }
+    }
+}
+
+$files = get_user_files();
+$page_title = 'Gallery';
+$level_display = $level;
+require_once __DIR__ . '/templates/header.php';
+?>
+
 <div class="gallery-container">
   <!-- Page Header -->
   <div class="gallery-header">
@@ -10,22 +49,22 @@
     <p>Upload your photos and they'll appear below. Try to upload a PHP shell at each security level!</p>
   </div>
 
-  <!-- Alert Messages -->
-  {% if error %}
-  <div class="alert alert-{{ error_type }}">
-    <span class="alert-icon">{% if error_type == 'danger' %}⛔{% elif error_type == 'warning' %}⚠️{% else %}ℹ️{% endif %}</span>
-    <span>{{ error }}</span>
+  <!-- Alerts -->
+  <?php if ($error): ?>
+  <div class="alert alert-<?= $error_type ?>">
+    <span class="alert-icon"><?= $error_type === 'danger' ? '⛔' : '⚠️' ?></span>
+    <span><?= htmlspecialchars($error) ?></span>
     <button class="alert-close" onclick="this.parentElement.style.display='none'">✕</button>
   </div>
-  {% endif %}
+  <?php endif; ?>
 
-  {% if success %}
+  <?php if ($success): ?>
   <div class="alert alert-success">
     <span class="alert-icon">✅</span>
-    <span>{{ success }}</span>
+    <span><?= htmlspecialchars($success) ?></span>
     <button class="alert-close" onclick="this.parentElement.style.display='none'">✕</button>
   </div>
-  {% endif %}
+  <?php endif; ?>
 
   <!-- Upload Form -->
   <div class="upload-card">
@@ -34,7 +73,7 @@
       <h2>Upload a File</h2>
     </div>
 
-    <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+    <form action="gallery.php" method="POST" enctype="multipart/form-data" id="uploadForm">
       <div class="file-drop-zone" id="dropZone">
         <div class="drop-content" id="dropContent">
           <span class="drop-icon">📁</span>
@@ -55,27 +94,27 @@
         <button type="button" class="preview-remove" onclick="resetUpload()">✕</button>
       </div>
 
-      {% if level == '1' %}
+      <?php if ($level === '1'): ?>
       <div class="level-notice level-1-notice" id="levelNotice">
         <strong>🔴 Level 1:</strong> Only client-side JS checks the file extension. Intercept with Burp Suite!
       </div>
-      {% elif level == '2' %}
+      <?php elseif ($level === '2'): ?>
       <div class="level-notice level-2-notice">
         <strong>🟠 Level 2:</strong> Extension blacklist active. Try alternative extensions like .phtml, .php5, .shtml!
       </div>
-      {% elif level == '3' %}
+      <?php elseif ($level === '3'): ?>
       <div class="level-notice level-3-notice">
         <strong>🟡 Level 3:</strong> MIME type check active. Try changing the Content-Type header to image/png!
       </div>
-      {% elif level == '4' %}
+      <?php elseif ($level === '4'): ?>
       <div class="level-notice level-4-notice">
         <strong>🟢 Level 4:</strong> Magic number check active. Try prepending GIF89a to your shell code!
       </div>
-      {% elif level == '5' %}
+      <?php elseif ($level === '5'): ?>
       <div class="level-notice level-5-notice">
         <strong>✅ Level 5:</strong> Fully secure. Extension whitelist + MIME + magic bytes + double extension check. Good luck!
       </div>
-      {% endif %}
+      <?php endif; ?>
 
       <button type="submit" class="upload-btn" id="uploadBtn">
         <span>⬆️ Upload</span>
@@ -87,48 +126,55 @@
   <div class="gallery-section">
     <div class="gallery-section-header">
       <h2>📂 Your Uploaded Files</h2>
-      <span class="file-count">{{ files|length }} file(s)</span>
+      <span class="file-count"><?= count($files) ?> file(s)</span>
     </div>
 
-    {% if files %}
+    <?php if (!empty($files)): ?>
     <div class="files-grid">
-      {% for file in files %}
-      <div class="file-card" data-level="{{ file.security_level }}">
+      <?php foreach ($files as $file): ?>
+      <div class="file-card" data-level="<?= $file['security_level'] ?>">
         <div class="file-preview-thumb">
-          <img src="{{ url_for('uploaded_file', filename=file.filename) }}" alt="{{ file.original_name }}" loading="lazy"
-               onerror="this.parentElement.innerHTML='<div class=\'no-preview\'>⚠️<br>No Preview</div>'">
+          <?php
+          $ext = get_extension($file['filename']);
+          $image_exts = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'];
+          if (in_array($ext, $image_exts)):
+          ?>
+          <img src="view.php?file=<?= urlencode($file['filename']) ?>" alt="<?= htmlspecialchars($file['original_name']) ?>"
+               loading="lazy" onerror="this.parentElement.innerHTML='<div class=\'no-preview\'>⚠️<br>No Preview</div>'">
+          <?php else: ?>
+          <div class="no-preview"><?= level_icon($file['security_level']) ?><br>Non-image</div>
+          <?php endif; ?>
         </div>
         <div class="file-details">
-          <span class="file-name" title="{{ file.original_name }}">{{ file.original_name }}</span>
+          <span class="file-name" title="<?= htmlspecialchars($file['original_name']) ?>"><?= htmlspecialchars($file['original_name']) ?></span>
           <div class="file-meta">
-            <span class="file-level level-badge-{{ file.security_level }}">
-              {% if file.security_level == '1' %}🔴 L1{% elif file.security_level == '2' %}🟠 L2{% elif file.security_level == '3' %}🟡 L3{% elif file.security_level == '4' %}🟢 L4{% elif file.security_level == '5' %}✅ L5{% endif %}
+            <span class="file-level level-badge-<?= $file['security_level'] ?>">
+              <?= level_icon($file['security_level']) ?> L<?= $file['security_level'] ?>
             </span>
           </div>
           <div class="file-actions">
-            <a href="{{ url_for('uploaded_file', filename=file.filename) }}" target="_blank" class="file-action-btn view-btn">👁️ View</a>
-            <a href="{{ url_for('delete_file', filename=file.filename) }}" class="file-action-btn delete-btn" onclick="return confirm('Delete this file?')">🗑️ Delete</a>
+            <a href="view.php?file=<?= urlencode($file['filename']) ?>" target="_blank" class="file-action-btn view-btn">👁️ View</a>
+            <a href="gallery.php?delete=<?= urlencode($file['filename']) ?>" class="file-action-btn delete-btn" onclick="return confirm('Delete this file?')">🗑️ Delete</a>
           </div>
         </div>
       </div>
-      {% endfor %}
+      <?php endforeach; ?>
     </div>
-    {% else %}
+    <?php else: ?>
     <div class="empty-gallery">
       <div class="empty-icon">📭</div>
       <h3>No files uploaded yet</h3>
       <p>Upload an image above to see it here!</p>
     </div>
-    {% endif %}
+    <?php endif; ?>
   </div>
 </div>
 
 <script>
 // ========== CLIENT-SIDE EXTENSION CHECK (Level 1 JS-only "security") ==========
 const ALLOWED_EXTS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'];
-const level = '{{ level }}';
+const level = '<?= $level ?>';
 
-// Drag & Drop support
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 
@@ -160,7 +206,7 @@ function handleFileSelect() {
 
   const ext = file.name.split('.').pop().toLowerCase();
 
-  // ========== LEVEL 1: Client-side only check ==========
+  // Level 1: Client-side only check
   if (level === '1' && !ALLOWED_EXTS.includes(ext)) {
     const notice = document.getElementById('levelNotice');
     if (notice) {
@@ -184,4 +230,5 @@ function resetUpload() {
   document.getElementById('filePreview').classList.add('hidden');
 }
 </script>
-{% endblock %}
+
+<?php require_once __DIR__ . '/templates/footer.php'; ?>
